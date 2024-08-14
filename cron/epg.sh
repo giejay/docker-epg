@@ -6,6 +6,8 @@ BUILD_DIR=/build
 OUT_DIR=$BUILD_DIR/guides
 LOCK_FILE=$BUILD_DIR/.lock
 ONCE_FILE=$BUILD_DIR/.once
+DAYS=7
+MAX_CONNECTIONS=3
 
 [ -f $LOCK_FILE ] && exit
 if [ "x-$1" = "x-oneshot" ]; then
@@ -50,14 +52,14 @@ for SITE in $SITES; do
   for LANG in $LANGS; do
     if [ -f sites/$SITE/${SITE}_$LANG.channels.xml ]; then
       echo "Building guide for $SITE ($LANG)..."
-      npm run grab -- --site=$SITE --lang=$LANG --output=$GUIDE_XML 1>~/$SITE.log 2>&1 &
+      npm run grab -- --days=$DAYS --maxConnections=$MAX_CONNECTIONS --site=$SITE --lang=$LANG --output=$GUIDE_XML 1>~/$SITE.log 2>&1 &
       CNT=$((CNT+1))
     fi
   done
   # no guide for configured language, use default
   if [ $CNT -eq 0 ]; then
-    echo "Building guide for $SITE..."
-    npm run grab -- --site=$SITE --output=$GUIDE_XML 1>~/$SITE.log 2>&1 &
+    echo "Building guide for $SITE... $DAYS"
+    npm run grab -- --days=$DAYS --site=$SITE --maxConnections=$MAX_CONNECTIONS --output=$GUIDE_XML 1>~/$SITE.log 2>&1 &
   fi
 done
 if [ -f "$(dirname $0)/channels.xml" ]; then
@@ -67,9 +69,9 @@ if [ -f "$(dirname $0)/channels.xml" ]; then
       ln -s $(dirname $0)/channels.xml curated/channels.xml
     fi
   fi
-  echo "Building guide for curated channels..."
+  echo "Building guide for curated channels... $DAYS"
   GUIDE_XML=$GUIDE_DIR/curated.xml
-  npm run grab -- --channels=curated/channels.xml --output=$GUIDE_XML 1>~/curated.log 2>&1 &
+  npm run grab -- --channels=curated/channels.xml --maxConnections=$MAX_CONNECTIONS --days=$DAYS --output=$GUIDE_XML
 fi
 
 rm -f $LOCK_FILE
